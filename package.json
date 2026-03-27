@@ -7,6 +7,7 @@
   "packageManager": "pnpm@10.29.3",
   "scripts": {
     "build": "node ./scripts/build.mjs",
+    "dev": "pnpm run build && concurrently \"node --watch-path=./src ./scripts/build.mjs\" \"pnpm run serve\"",
     "start": "pnpm run build && pnpm run serve",
     "serve": "serve dist --listen 4173"
   },
@@ -14,6 +15,7 @@
     "node": ">=24 <25"
   },
   "devDependencies": {
+    "concurrently": "^9.2.1",
     "esbuild": "^0.25.11",
     "handlebars": "^4.7.8",
     "serve": "^14.2.5"
