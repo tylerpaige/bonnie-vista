@@ -1,0 +1,18 @@
+<!doctype html>
+<html>
+  <head></head>
+  <body>
+    hello?
+    {{#each htmlWebpackPlugin.options.options }}
+      {{@key}}
+    {{/each}}
+    {{ foo }}
+    <div id="debug"></div>
+    <div class="container">
+      {{> panel 'Express clairvoyant'}}
+      {{> panel 'A medium on the double'}}
+      {{> panel 'Miss Bonnie Vista'}}
+      {{> panel 'Next right, Exit 8'}}
+    </div>
+  </body>
+</html>

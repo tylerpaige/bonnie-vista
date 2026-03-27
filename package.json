@@ -1,0 +1,23 @@
+{
+  "name": "rotating-windows",
+  "version": "1.0.0",
+  "description": "Buildable static animation demo",
+  "private": true,
+  "main": "dist/index.html",
+  "packageManager": "pnpm@10.29.3",
+  "scripts": {
+    "build": "node ./scripts/build.mjs",
+    "start": "pnpm run build && pnpm run serve",
+    "serve": "serve dist --listen 4173"
+  },
+  "engines": {
+    "node": ">=24 <25"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.11",
+    "handlebars": "^4.7.8",
+    "serve": "^14.2.5"
+  },
+  "author": "",
+  "license": "ISC"
+}
