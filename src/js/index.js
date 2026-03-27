@@ -9,6 +9,8 @@ const script = [
   "Drive-thru Clairvoyant",
   "“A medium on the double!”",
   "Miss Bonnie Vista",
+  "",
+  "Turn right here",
   ""
 ];
 
