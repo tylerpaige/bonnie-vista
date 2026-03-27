@@ -1,4 +1,4 @@
-import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { cp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import * as esbuild from 'esbuild';
@@ -26,6 +26,10 @@ const build = async () => {
 
   const css = await readFile(path.join(srcDir, 'css', 'index.css'), 'utf8');
   await writeFile(path.join(distDir, 'style.css'), css, 'utf8');
+  await cp(path.join(srcDir, 'images'), path.join(distDir, 'images'), {
+    recursive: true,
+    force: true
+  });
 
   const indexTemplate = await readFile(path.join(srcDir, 'templates', 'index.hbs'), 'utf8');
   const panelTemplate = await readFile(path.join(srcDir, 'templates', 'panel.hbs'), 'utf8');

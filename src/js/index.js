@@ -9,9 +9,13 @@ const script = [
   "Drive-thru Clairvoyant",
   "“A medium on the double!”",
   "Miss Bonnie Vista",
-  "",
+  {
+    type: "image",
+    src: "./images/bonnie-vista.jpg",
+    alt: "Bonnie Vista billboard",
+  },
   "Turn right here",
-  ""
+  "",
 ];
 
 const roundTo = (number, numOfDecPlaces = 2) => {
@@ -179,9 +183,38 @@ const getScaleAnimationDurationMs = (panels) => {
   return parsedDuration > 0 ? parsedDuration : 10000;
 };
 
-const updatePanelText = (panel, text) => {
-  const target = panel.outer.querySelector(".js-panel-content p") || panel.outer;
-  target.textContent = text;
+const normalizeScriptItem = (item) => {
+  if (item && typeof item === "object" && item.type === "image") {
+    return {
+      type: "image",
+      src: item.src || "",
+      alt: item.alt || "",
+    };
+  }
+  return {
+    type: "text",
+    text: String(item ?? ""),
+  };
+};
+
+const updatePanelContent = (panel, item) => {
+  const contentEl = panel.outer.querySelector(".js-panel-content");
+  if (!contentEl) return;
+
+  const normalized = normalizeScriptItem(item);
+
+  if (normalized.type === "image") {
+    const img = document.createElement("img");
+    img.src = normalized.src;
+    img.alt = normalized.alt;
+    img.className = "panel__image";
+    contentEl.replaceChildren(img);
+    return;
+  }
+
+  const p = document.createElement("p");
+  p.textContent = normalized.text;
+  contentEl.replaceChildren(p);
 };
 
 const createPanelScriptLooper = (panels, lines) => {
@@ -192,7 +225,7 @@ const createPanelScriptLooper = (panels, lines) => {
   panelUpdateOrder.forEach((panelIndex, scriptLineIndex) => {
     const panel = visiblePanels[panelIndex];
     if (!panel) return;
-    updatePanelText(panel, lines[scriptLineIndex % lines.length]);
+    updatePanelContent(panel, lines[scriptLineIndex % lines.length]);
   });
 
   let panelOrderIndex = 0;
@@ -202,7 +235,7 @@ const createPanelScriptLooper = (panels, lines) => {
 
   const updateNextPanel = () => {
     const panelIndex = panelUpdateOrder[panelOrderIndex];
-    updatePanelText(visiblePanels[panelIndex], lines[scriptIndex]);
+    updatePanelContent(visiblePanels[panelIndex], lines[scriptIndex]);
     panelOrderIndex = (panelOrderIndex + 1) % panelUpdateOrder.length;
     scriptIndex = (scriptIndex + 1) % lines.length;
   };
