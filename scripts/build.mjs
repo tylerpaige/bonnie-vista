@@ -38,13 +38,8 @@ const build = async () => {
   const compile = Handlebars.compile(indexTemplate);
   const context = {
     htmlWebpackPlugin: { options: { options: {} } },
-    foo: ''
   };
   let html = compile(context);
-
-  html = html.replace('<head></head>', '<head><link rel="stylesheet" href="./style.css"></head>');
-  html = html.replace('</body>', '<script type="text/javascript" src="./script.js"></script></body>');
-
   await writeFile(path.join(distDir, 'index.html'), html, 'utf8');
 };
 

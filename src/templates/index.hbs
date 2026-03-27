@@ -1,12 +1,12 @@
 <!doctype html>
 <html>
-  <head></head>
+  <head>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
   <body>
-    hello?
     {{#each htmlWebpackPlugin.options.options }}
       {{@key}}
     {{/each}}
-    {{ foo }}
     <div id="debug"></div>
     <div class="container">
       {{> panel 'Express clairvoyant'}}
@@ -14,5 +14,6 @@
       {{> panel 'Miss Bonnie Vista'}}
       {{> panel 'Next right, Exit 8'}}
     </div>
+    <script type="text/javascript" src="./script.js"></script>
   </body>
 </html>
