@@ -46,14 +46,20 @@ const getPointerAngle = (clientX, clientY, container) => {
 
 /** Ring buffer length for flick velocity (progress is unwrapped cycles). */
 const VELOCITY_MAX_SAMPLES = 24;
-/** Minimum speed (cycles/s) to start coasting after release. */
-const MOMENTUM_MIN_VELOCITY = 0.012;
 /** Scales measured velocity (touch often under-samples; coalesced events help). */
 const MOMENTUM_GAIN = 2.2;
 /** Exponential drag: v *= exp(-k*dt) — low k = heavy flywheel, long coast. */
 const MOMENTUM_DRAG = 0.88;
-/** Stop when speed drops below this (cycles/s). */
-const MOMENTUM_STOP_VELOCITY = 0.004;
+/**
+ * Linear scale loop speed (cycles/s): one full cycle per {@link SCALE_CYCLE_DURATION_MS}.
+ * Hand off from inertia when |v| falls below this so motion stays continuous with playback.
+ */
+const MOMENTUM_STOP_VELOCITY = 1000 / SCALE_CYCLE_DURATION_MS;
+/**
+ * Start coast only if release speed exceeds playback; avoids ending on the first frame when
+ * |v| is already below {@link MOMENTUM_STOP_VELOCITY}. Floor keeps noisy tiny input idle.
+ */
+const MOMENTUM_MIN_VELOCITY = Math.max(0.012, MOMENTUM_STOP_VELOCITY * 1.02);
 /** Cap initial spin so a bad velocity sample cannot jump the scene. */
 const MOMENTUM_MAX_VELOCITY = 4;
 
