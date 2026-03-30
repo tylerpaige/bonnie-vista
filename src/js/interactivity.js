@@ -1,4 +1,12 @@
-import { SCALE_CYCLE_DURATION_MS } from "./config.js";
+import {
+  MOMENTUM_DRAG,
+  MOMENTUM_GAIN,
+  MOMENTUM_MAX_VELOCITY,
+  MOMENTUM_MIN_VELOCITY,
+  MOMENTUM_STOP_VELOCITY,
+  SCALE_CYCLE_DURATION_MS,
+  VELOCITY_MAX_SAMPLES,
+} from "./config.js";
 import {
   getScaleAnimationProgress,
   getScaleCycleAnimation,
@@ -43,25 +51,6 @@ const getPointerAngle = (clientX, clientY, container) => {
   const cy = rect.top + rect.height / 2;
   return Math.atan2(clientY - cy, clientX - cx);
 };
-
-/** Ring buffer length for flick velocity (progress is unwrapped cycles). */
-const VELOCITY_MAX_SAMPLES = 24;
-/** Scales measured velocity (touch often under-samples; coalesced events help). */
-const MOMENTUM_GAIN = 2.2;
-/** Exponential drag: v *= exp(-k*dt) — low k = heavy flywheel, long coast. */
-const MOMENTUM_DRAG = 0.88;
-/**
- * Linear scale loop speed (cycles/s): one full cycle per {@link SCALE_CYCLE_DURATION_MS}.
- * Hand off from inertia when |v| falls below this so motion stays continuous with playback.
- */
-const MOMENTUM_STOP_VELOCITY = 1000 / SCALE_CYCLE_DURATION_MS;
-/**
- * Start coast only if release speed exceeds playback; avoids ending on the first frame when
- * |v| is already below {@link MOMENTUM_STOP_VELOCITY}. Floor keeps noisy tiny input idle.
- */
-const MOMENTUM_MIN_VELOCITY = Math.max(0.012, MOMENTUM_STOP_VELOCITY * 1.02);
-/** Cap initial spin so a bad velocity sample cannot jump the scene. */
-const MOMENTUM_MAX_VELOCITY = 4;
 
 /**
  * Pointer drag scrubs the scale cycle: clockwise advances, counter-clockwise reverses.
