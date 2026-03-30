@@ -1,7 +1,6 @@
 import { SCALE_CYCLE_DURATION_MS } from "./config.js";
 import { getScaleAnimationProgress } from "./animation.js";
 import { getArgminPanelAtProgress } from "./sizer.js";
-import { wrapProgress } from "./util.js";
 
 /* Matches the order panels become most collapsed (min outer scale product) as angle increases. */
 const PANEL_UPDATE_ORDER = [0, 1, 3, 2];
@@ -11,7 +10,8 @@ const PANEL_UPDATE_ORDER = [0, 1, 3, 2];
 const INITIAL_SCRIPT_LINE_COUNT = 4;
 
 const updatePanelContent = (panel, item) => {
-  const contentEl = panel.outer.querySelector(".js-panel-content");
+  const contentEl =
+    panel.content ?? panel.outer?.querySelector?.(".js-panel-content");
   if (!contentEl) return;
 
   if (item.type === "image") {
@@ -28,10 +28,16 @@ const updatePanelContent = (panel, item) => {
   contentEl.replaceChildren(p);
 };
 
-const numUpdatesForTimeInCycle = (T, cycleMs) => {
-  const step = cycleMs / 4;
-  if (T < 2 * step) return 0;
-  return 1 + Math.floor((T - 2 * step) / step);
+/**
+ * Total sequential script updates for scrub: base from live playback plus quarter-steps
+ * crossed since pointerdown (`progress` is unwrapped cycles: Δθ/2π).
+ * Each full loop adds 4 quarter steps so the script keeps advancing instead of resetting at 100%.
+ */
+export const totalScriptUpdatesForScrub = (baseN, startProgress, progress) => {
+  const deltaQ =
+    Math.floor(progress * 4) - Math.floor(startProgress * 4);
+  const n = baseN + deltaQ;
+  return Math.max(0, n);
 };
 
 const getScriptStateAfterUpdates = (numUpdates, lines) => {
@@ -54,10 +60,19 @@ const applyPanelScriptState = (panels, lines, lineIndexByPanel) => {
   }
 };
 
-export const applyAnimationProgressToScript = (panels, lines, progress) => {
-  const p = wrapProgress(progress);
-  const T = p * SCALE_CYCLE_DURATION_MS;
-  const n = numUpdatesForTimeInCycle(T, SCALE_CYCLE_DURATION_MS);
+/**
+ * Snap panel copy while scrubbing: one script advance per quarter-turn of unwrapped progress,
+ * stacked on {@link totalScriptUpdatesForScrub}'s base from the looper.
+ */
+export const applyAnimationProgressToScript = (
+  panels,
+  lines,
+  progress,
+  scrub,
+) => {
+  const baseN = scrub?.baseN ?? 0;
+  const startProgress = scrub?.startProgress ?? 0;
+  const n = totalScriptUpdatesForScrub(baseN, startProgress, progress);
   const { lineIndexByPanel } = getScriptStateAfterUpdates(n, lines);
   applyPanelScriptState(panels, lines, lineIndexByPanel);
 };
@@ -75,6 +90,7 @@ export const createPanelScriptLooper = (panels, lines, dims) => {
       pause: () => {},
       resume: () => {},
       syncToProgress: () => {},
+      getTotalScriptUpdates: () => 0,
       destroy: () => {},
     };
   }
@@ -98,16 +114,22 @@ export const createPanelScriptLooper = (panels, lines, dims) => {
   let paused = false;
   let pendingSteps = 0;
   let alive = true;
+  /** Matches {@link getScriptStateAfterUpdates}(n) for live RAF updates (argmin path). */
+  let totalScriptUpdates = 0;
 
   const scheduleStep = () => {
     if (paused) return;
     pendingSteps++;
   };
 
-  const syncToProgress = (progress) => {
-    const p = wrapProgress(progress);
-    const T = p * SCALE_CYCLE_DURATION_MS;
-    const n = numUpdatesForTimeInCycle(T, SCALE_CYCLE_DURATION_MS);
+  const syncToProgress = (progress, scrub) => {
+    if (!scrub) return;
+    const n = totalScriptUpdatesForScrub(
+      scrub.baseN,
+      scrub.startProgress,
+      progress,
+    );
+    totalScriptUpdates = n;
     const state = getScriptStateAfterUpdates(n, lines);
     panelOrderIndex = state.panelOrderIndex;
     scriptIndex = state.scriptIndex;
@@ -128,6 +150,7 @@ export const createPanelScriptLooper = (panels, lines, dims) => {
         panelOrderIndex = (panelOrderIndex + 1) % PANEL_UPDATE_ORDER.length;
         scriptIndex = (scriptIndex + 1) % lines.length;
         pendingSteps--;
+        totalScriptUpdates++;
       }
     }
     requestAnimationFrame(rafLoop);
@@ -148,6 +171,7 @@ export const createPanelScriptLooper = (panels, lines, dims) => {
       paused = false;
     },
     syncToProgress,
+    getTotalScriptUpdates: () => totalScriptUpdates,
     destroy: () => {
       alive = false;
       window.clearTimeout(initialDelayId);
